@@ -1,219 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Marks Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
+:root {
+  --bg:        #0f0f0f;
+  --bg2:       #1a1a1a;
+  --bg3:       #222;
+  --bg4:       #2a2a2a;
+  --border:    #2e2e2e;
+  --border2:   #3a3a3a;
+  --text:      #f0f0f0;
+  --text2:     #888;
+  --text3:     #555;
+  --green:     #1fba84;
+  --green-dim: #145c42;
+  --amber:     #e89c2f;
+  --red:       #e04a4a;
+  --mono:      'DM Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+}
+body.light {
+  --bg:        #f4f4f2;
+  --bg2:       #ffffff;
+  --bg3:       #eaeae8;
+  --bg4:       #e2e2e0;
+  --border:    #d8d8d5;
+  --border2:   #c8c8c4;
+  --text:      #111;
+  --text2:     #666;
+  --text3:     #aaa;
+  --green-dim: #d0f2e6;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-.wrap{max-width:390px;margin:0 auto;padding:10px 12px 0;font-family:var(--font-sans)}
-.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:14px 16px;margin-bottom:10px}
-.score-big{font-size:54px;font-weight:500;line-height:1;letter-spacing:-2px}
-.bar-track{height:7px;border-radius:99px;background:var(--color-border-tertiary);overflow:hidden;margin-top:10px}
-.bar-fill{height:100%;border-radius:99px;transition:width .25s,background .25s}
-.display-box{background:var(--color-background-secondary);border-radius:12px;padding:10px 16px;text-align:center;margin-bottom:10px;min-height:56px;display:flex;align-items:center;justify-content:center}
-.disp-num{font-size:38px;font-weight:500;color:var(--color-text-primary);letter-spacing:-1px}
-.disp-num.empty{color:var(--color-text-tertiary)}
-.warn-pill{background:#FAEEDA;border:0.5px solid #BA7517;border-radius:8px;padding:6px 12px;font-size:13px;color:#633806;font-weight:500;text-align:center;margin-bottom:10px}
-.kbd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.k{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;height:56px;font-size:22px;font-weight:500;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-.k:active{background:var(--color-border-secondary)}
-.k-enter{background:#1D9E75;color:#fff;border-color:#1D9E75;font-size:15px}
-.k-enter:active{background:#0F6E56}
-.k-enter.off{background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary);pointer-events:none}
-.k-undo.off{opacity:.3;pointer-events:none}
-.done-btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:17px;font-weight:500;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px}
-.done-btn.active{background:#1D9E75;color:#fff}
-.done-btn.active:active{background:#0F6E56}
-.done-btn.inactive{background:var(--color-background-secondary);color:var(--color-text-tertiary);pointer-events:none}
-.toprow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.outof-inp{width:62px;text-align:center;font-size:15px;font-weight:500;padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-primary);-moz-appearance:textfield}
-.outof-inp::-webkit-inner-spin-button,.outof-inp::-webkit-outer-spin-button{-webkit-appearance:none}
-.dark-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px;color:var(--color-text-secondary)}
-.hist-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
-.hist-row:last-child{border-bottom:none}
-.h-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation}
-.h-circle.done{background:#1D9E75;border-color:#1D9E75}
-.sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:10;display:flex;flex-direction:column;justify-content:flex-end;min-height:100%}
-.sheet{background:var(--color-background-primary);border-radius:16px 16px 0 0;padding:0 16px 24px;overflow-y:auto;max-height:72vh}
-.sheet-handle{width:36px;height:4px;background:var(--color-border-secondary);border-radius:99px;margin:12px auto 14px}
-.s-card{background:var(--color-background-secondary);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.bottom-bar{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;touch-action:manipulation}
-.bb-pill{background:var(--color-background-secondary);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap}
-.saved-badge{font-size:11px;color:#1D9E75;font-weight:500;opacity:0;transition:opacity .4s}
-.saved-badge.show{opacity:1}
-</style>
+html,body{height:100%;background:var(--bg);font-family:var(--sans);color:var(--text)}
+.app{max-width:420px;margin:0 auto;padding:16px 14px 32px;min-height:100dvh;display:flex;flex-direction:column;gap:10px}
 
-<div style="position:relative"><div class="wrap" id="root"></div></div>
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px}
+.app-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.saved-tag{font-family:var(--mono);font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;letter-spacing:.06em}
+.saved-tag.show{opacity:1}
+.icon-btn{background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2);font-family:var(--sans);transition:border-color .15s,color .15s}
+.icon-btn:active{background:var(--bg3)}
+
+/* score card */
+.score-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:20px 20px 18px}
+.outof-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.outof-label{font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em}
+.outof-inp{width:58px;text-align:center;font-size:14px;font-weight:500;font-family:var(--mono);padding:5px 6px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text);-moz-appearance:textfield;outline:none}
+.outof-inp:focus{border-color:var(--green)}
+.outof-inp::-webkit-inner-spin-button,.outof-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+.score-main{text-align:center;padding:6px 0 4px}
+.score-num{font-family:var(--mono);font-size:72px;font-weight:500;line-height:1;letter-spacing:-3px;transition:color .2s}
+.score-sub{font-size:13px;color:var(--text2);margin-top:6px;font-family:var(--mono)}
+.bar-wrap{margin-top:14px}
+.bar-track{height:5px;border-radius:99px;background:var(--bg4);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .3s cubic-bezier(.4,0,.2,1),background .3s}
+
+/* action row — two buttons */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-save{padding:16px 10px;border:none;border-radius:14px;font-size:15px;font-weight:600;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;touch-action:manipulation;transition:transform .1s,background .15s}
+.btn-save.active{background:var(--green);color:#fff}
+.btn-save.active:active{transform:scale(.97);background:#19a872}
+.btn-save.inactive{background:var(--bg3);color:var(--text3);pointer-events:none;border:1px solid var(--border)}
+.btn-skip{padding:16px 10px;border:1px solid var(--border2);border-radius:14px;font-size:15px;font-weight:500;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;touch-action:manipulation;background:var(--bg2);color:var(--text2);transition:transform .1s,background .15s,color .15s,border-color .15s}
+.btn-skip:active{transform:scale(.97);background:var(--bg3)}
+.btn-skip.has-work{color:var(--amber);border-color:var(--amber)}
+.btn-skip.inactive{background:var(--bg3);color:var(--text3);pointer-events:none}
+
+/* entries strip */
+.entries-strip{display:flex;align-items:center;gap:6px;overflow:hidden}
+.entry-chip{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:13px;font-weight:500;font-family:var(--mono);color:var(--text2);white-space:nowrap;flex-shrink:0}
+.entry-chip.latest{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+.strip-label{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;flex-shrink:0}
+
+/* input + keyboard card */
+.kbd-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:14px}
+.disp-row{display:flex;gap:8px;align-items:stretch;margin-bottom:12px}
+.display-box{background:var(--bg3);border-radius:10px;text-align:center;padding:12px;min-height:60px;display:flex;align-items:center;justify-content:center;flex:1}
+.skip-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:0 14px;cursor:pointer;font-size:12px;font-weight:500;font-family:var(--mono);color:var(--text3);white-space:nowrap;touch-action:manipulation;transition:background .1s,color .1s,border-color .1s;letter-spacing:.04em}
+.skip-btn:active{background:var(--bg4);color:var(--text2)}
+.skip-btn.has-work{color:var(--amber);border-color:var(--amber)}
+.disp-val{font-family:var(--mono);font-size:42px;font-weight:500;letter-spacing:-1px;color:var(--text);transition:color .15s}
+.disp-val.empty{color:var(--text3)}
+.warn-row{background:#2a1a0a;border:1px solid #5a3a10;border-radius:8px;padding:8px 12px;font-size:13px;color:#e89c2f;font-weight:500;text-align:center;margin-bottom:12px;font-family:var(--mono)}
+.kbd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.k{background:var(--bg3);border:1px solid var(--border);border-radius:12px;height:62px;font-size:24px;font-weight:500;font-family:var(--mono);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:background .1s,transform .08s}
+.k:active{background:var(--bg4);transform:scale(.94)}
+.k-zero{font-size:24px}
+.k-undo{font-size:13px;color:var(--text2)}
+.k-undo.off{opacity:.25;pointer-events:none}
+.k-redo{font-size:13px;color:var(--text2)}
+.k-redo.off{opacity:.25;pointer-events:none}
+.k-add{background:var(--green);color:#fff;border-color:var(--green);font-size:15px;font-weight:600;font-family:var(--sans)}
+.k-add:active{background:#19a872}
+.k-add.off{background:var(--bg3);color:var(--text3);border-color:var(--border);pointer-events:none}
+
+/* history card */
+.hist-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:14px 16px}
+.sect-label{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.hist-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
+.hist-row:last-child{border-bottom:none}
+.h-check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;transition:all .15s}
+.h-check.done{background:var(--green);border-color:var(--green)}
+.h-val{flex:1;font-family:var(--mono);font-size:20px;font-weight:500;color:var(--text)}
+.h-meta{font-size:12px;color:var(--text3);font-family:var(--mono)}
+
+/* bottom bar */
+.bottom-bar{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;touch-action:manipulation;transition:background .1s}
+.bottom-bar:active{background:var(--bg3)}
+.bb-left{display:flex;flex-direction:column;gap:4px}
+.bb-count{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em}
+.bb-pills{display:flex;gap:6px;flex-wrap:wrap}
+.bb-pill{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:13px;font-weight:500;font-family:var(--mono);color:var(--text2)}
+.bb-arrow{font-size:16px;color:var(--text3)}
+
+/* sheet overlay */
+.sheet-over{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:var(--bg2);border-radius:20px 20px 0 0;padding:0 16px 36px;max-height:75dvh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:99px;margin:14px auto 16px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sheet-title{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--mono);letter-spacing:.06em}
+.clear-btn{background:none;border:none;font-size:12px;color:var(--red);cursor:pointer;font-family:var(--sans)}
+.sess-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.sess-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.sess-total{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--text)}
+.sess-outof{font-family:var(--mono);font-size:14px;color:var(--text3)}
+.sess-meta{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.sess-marks{font-size:12px;color:var(--text2);margin-top:3px;font-family:var(--mono);line-height:1.5}
+.empty-state{text-align:center;padding:32px 0;font-size:13px;color:var(--text3);font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div id="sheet-slot"></div>
 
 <script>
-const KEY='marks_v1';
-function load(){try{const d=localStorage.getItem(KEY);return d?JSON.parse(d):{}}catch(e){return{}}}
-function save(s){try{localStorage.setItem(KEY,JSON.stringify({total:s.total,outOf:s.outOf,history:s.history,sessions:s.sessions,dark:s.dark}));}catch(e){}}
-
-const def={cur:'',total:0,outOf:80,history:[],sessions:[],dark:false,sheet:false,savedFlash:false};
-const stored=load();
-const S=Object.assign({},def,stored,{cur:'',sheet:false,savedFlash:false});
-
-function fmt(n){return n%1===0?String(n):n.toFixed(1)}
-
-function persist(){
-  save(S);
-  S.savedFlash=true;render();
-  setTimeout(()=>{S.savedFlash=false;render();},1200);
+const KEY = 'marks_v2';
+function loadState() {
+  try { const d = localStorage.getItem(KEY); return d ? JSON.parse(d) : {}; } catch(e) { return {}; }
+}
+function saveState(s) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      total: s.total, outOf: s.outOf,
+      history: s.history, redoStack: s.redoStack, sessions: s.sessions, dark: s.dark
+    }));
+  } catch(e) {}
 }
 
-function tryAdd(){
-  const v=parseFloat(S.cur);
-  if(isNaN(v)||S.cur==='')return;
-  const nt=parseFloat((S.total+v).toFixed(4));
-  if(nt>S.outOf)return;
-  S.total=nt;
-  S.history.push({v,done:false});
-  S.cur='';
+const defaults = { cur:'', total:0, outOf:80, history:[], redoStack:[], sessions:[], dark:true, sheet:false, flash:false };
+const stored = loadState();
+const S = Object.assign({}, defaults, stored, { cur:'', sheet:false, flash:false });
+
+// apply initial theme
+if (!S.dark) document.body.classList.add('light');
+
+function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
+
+function persist() {
+  saveState(S);
+  S.flash = true; render();
+  setTimeout(() => { S.flash = false; render(); }, 1400);
+}
+
+function tryAdd() {
+  const v = parseFloat(S.cur);
+  if (isNaN(v) || S.cur === '') return;
+  const nt = parseFloat((S.total + v).toFixed(4));
+  if (nt > S.outOf) return;
+  S.total = nt;
+  S.history.push({ v, done: false });
+  S.redoStack = [];
+  S.cur = '';
   persist();
 }
 
-function pressKey(k){
-  if(k==='enter'){tryAdd();return;}
-  if(k==='undo'){undo();return;}
-  if(S.cur.length>=2)return;
-  const next=S.cur+k;
-  const v=parseFloat(next);
-  const remain=parseFloat((S.outOf-S.total).toFixed(4));
-  if(!isNaN(v)&&v>remain)return;
-  S.cur=next;
-  if(S.cur.length===2){setTimeout(()=>tryAdd(),120);}
+function pressKey(k) {
+  if (k === 'add') { tryAdd(); return; }
+  if (k === 'undo') { undo(); return; }
+  if (k === 'redo') { redo(); return; }
+  if (S.cur.length >= 2) return;
+  const next = S.cur + k;
+  const v = parseFloat(next);
+  const remain = parseFloat((S.outOf - S.total).toFixed(4));
+  if (!isNaN(v) && v > remain) return;
+  S.cur = next;
+  if (S.cur.length === 2) { setTimeout(() => tryAdd(), 110); }
   else render();
 }
 
-function undo(){
-  if(!S.history.length)return;
-  const last=S.history.pop();
-  S.total=parseFloat((S.total-last.v).toFixed(4));
-  S.cur='';persist();
-}
-
-function toggleDone(i){S.history[i].done=!S.history[i].done;persist();}
-
-function finishSession(){
-  if(S.total===0&&S.history.length===0)return;
-  const pct=S.outOf>0?((S.total/S.outOf)*100).toFixed(1):'—';
-  const nums=S.history.map(e=>fmt(e.v)).join(', ');
-  S.sessions.unshift({total:S.total,outOf:S.outOf,pct,count:S.history.length,nums,
-    time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-    date:new Date().toLocaleDateString([],{day:'numeric',month:'short'})});
-  if(S.sessions.length>20)S.sessions.pop();
-  S.total=0;S.history=[];S.cur='';
+function undo() {
+  if (!S.history.length) return;
+  const last = S.history.pop();
+  S.redoStack.push(last);
+  S.total = parseFloat((S.total - last.v).toFixed(4));
+  S.cur = '';
   persist();
 }
 
-function toggleSheet(){S.sheet=!S.sheet;render();}
-function toggleDark(){S.dark=!S.dark;persist();}
-function clearSessions(){S.sessions=[];persist();}
+function redo() {
+  if (!S.redoStack.length) return;
+  const entry = S.redoStack.pop();
+  const nt = parseFloat((S.total + entry.v).toFixed(4));
+  if (nt > S.outOf) return;
+  S.total = nt;
+  S.history.push(entry);
+  S.cur = '';
+  persist();
+}
 
-function render(){
-  const pct=S.outOf>0?((S.total/S.outOf)*100):0;
-  const remain=parseFloat((S.outOf-S.total).toFixed(4));
-  const barColor=pct>=90?'#E24B4A':pct>=75?'#EF9F27':'#1D9E75';
-  const scoreColor=pct>=90?'#E24B4A':pct>=75?'#BA7517':'var(--color-text-primary)';
-  const v=parseFloat(S.cur);
-  const wouldExceed=!isNaN(v)&&S.cur!==''&&(S.total+v)>S.outOf;
-  const canEnter=!isNaN(v)&&S.cur!==''&&!wouldExceed;
-  const hasWork=S.history.length>0||S.total>0;
-  const last5=S.history.slice(-5).reverse();
-  const last3sess=S.sessions.slice(0,3);
-  const dk=S.dark?'background:#1e1e1e;border-color:#333':'';
-  const dk2=S.dark?'background:#2a2a2a':'';
+function toggleDone(i) { S.history[i].done = !S.history[i].done; persist(); }
 
-  const sheet=S.sheet?`<div class="sheet-backdrop" onclick="if(event.target===this)toggleSheet()">
-    <div class="sheet" style="${S.dark?'background:#1e1e1e':''}">
-      <div class="sheet-handle"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:14px;font-weight:500;color:var(--color-text-secondary)">past sessions</span>
-        ${S.sessions.length?`<button onclick="clearSessions()" style="background:none;border:none;font-size:12px;color:var(--color-text-danger);cursor:pointer">clear all</button>`:''}
+function finishSession() {
+  if (S.total === 0 && S.history.length === 0) return;
+  const pct = S.outOf > 0 ? ((S.total / S.outOf) * 100).toFixed(1) : '—';
+  const nums = S.history.map(e => fmt(e.v)).join(', ');
+  S.sessions.unshift({
+    total: S.total, outOf: S.outOf, pct,
+    count: S.history.length, nums,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    date: new Date().toLocaleDateString([], { day: 'numeric', month: 'short' })
+  });
+  if (S.sessions.length > 30) S.sessions.pop();
+  S.total = 0; S.history = []; S.cur = '';
+  persist();
+}
+
+function skipSession() {
+  if (S.total === 0 && S.history.length === 0) return;
+  S.total = 0; S.history = []; S.cur = '';
+  persist();
+}
+function toggleSheet() { S.sheet = !S.sheet; render(); }
+function clearSessions() { if(confirm('Clear all sessions?')) { S.sessions = []; persist(); } }
+function toggleDark() {
+  S.dark = !S.dark;
+  document.body.classList.toggle('light', !S.dark);
+  persist();
+}
+
+function render() {
+  const pct = S.outOf > 0 ? (S.total / S.outOf) * 100 : 0;
+  const remain = parseFloat((S.outOf - S.total).toFixed(4));
+  const barCol = pct >= 90 ? 'var(--red)' : pct >= 70 ? 'var(--amber)' : 'var(--green)';
+  const scoreCol = pct >= 90 ? 'var(--red)' : pct >= 70 ? 'var(--amber)' : 'var(--text)';
+  const cv = parseFloat(S.cur);
+  const wouldExceed = !isNaN(cv) && S.cur !== '' && (S.total + cv) > S.outOf;
+  const canAdd = !isNaN(cv) && S.cur !== '' && !wouldExceed;
+  const hasWork = S.history.length > 0 || S.total > 0;
+  const last5 = S.history.slice(-5).reverse();
+  const last3s = S.sessions.slice(0, 3);
+
+  const undoSVG = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 7H11C13.2 7 15 8.8 15 11 15 13.2 13.2 15 11 15H7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6 4.5L3.5 7 6 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const redoSVG = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14.5 7H7C4.8 7 3 8.8 3 11 3 13.2 4.8 15 7 15H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 4.5L14.5 7 12 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const checkSVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const saveSVG  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8.5L6 12.5L14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const skipSVG  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  const last5entries = S.history.slice(-5).reverse();
+  const entriesHTML = last5entries.length
+    ? `<div class="entries-strip">
+        <span class="strip-label">last:</span>
+        ${last5entries.map((e,i) => `<span class="entry-chip ${i===0?'latest':''}">${fmt(e.v)}</span>`).join('')}
+       </div>`
+    : `<span class="strip-label" style="color:var(--text3)">no entries yet</span>`;
+
+  document.getElementById('app').innerHTML = `
+    <div class="topbar">
+      <button class="icon-btn" onclick="toggleDark()" style="flex-shrink:0">${S.dark ? '☀' : '◑'}</button>
+      <div style="flex:1;overflow:hidden;padding:0 10px">${entriesHTML}</div>
+      <span class="saved-tag ${S.flash ? 'show' : ''}" style="flex-shrink:0">saved ✓</span>
+    </div>
+
+    <div class="score-card">
+      <div class="outof-row">
+        <span class="outof-label">out of</span>
+        <input class="outof-inp" type="number" value="${S.outOf}" min="1" max="999"
+          oninput="S.outOf=parseFloat(this.value)||80;if(S.total>S.outOf)S.total=S.outOf;persist();" />
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:4px">${remain > 0 ? fmt(remain) + ' left' : 'full'}</span>
       </div>
-      ${S.sessions.length===0
-        ?`<div style="text-align:center;padding:28px 0;font-size:14px;color:var(--color-text-tertiary)">no sessions saved yet</div>`
-        :S.sessions.map(s=>`<div class="s-card" style="${dk2}">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
-            <span style="font-size:22px;font-weight:500;color:var(--color-text-primary)">${fmt(s.total)}<span style="font-size:14px;color:var(--color-text-secondary)"> / ${s.outOf}</span></span>
-            <span style="font-size:12px;color:var(--color-text-tertiary)">${s.date} ${s.time} · ${s.pct}%</span>
+      <div class="score-main">
+        <div class="score-num" style="color:${scoreCol}">${fmt(S.total)}</div>
+        <div class="score-sub">${pct.toFixed(1)}%</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.min(100, pct)}%;background:${barCol}"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-save ${hasWork ? 'active' : 'inactive'}" onclick="finishSession()">
+        ${saveSVG} save &amp; next
+      </button>
+      <button class="btn-skip ${hasWork ? 'has-work' : 'inactive'}" onclick="skipSession()">
+        ${skipSVG} skip copy
+      </button>
+    </div>
+
+    <div class="kbd-card">
+      <div class="disp-row">
+        <div class="display-box">
+          <span class="disp-val ${S.cur === '' ? 'empty' : ''}">${S.cur === '' ? '—' : S.cur}</span>
+        </div>
+      </div>
+      ${wouldExceed ? `<div class="warn-row">only ${fmt(remain)} left — can't add ${fmt(cv)}</div>` : ''}
+      <div class="kbd">
+        ${[1,2,3,4,5,6,7,8,9].map(n => `<div class="k" ontouchstart="pressKey('${n}')" onclick="pressKey('${n}')">${n}</div>`).join('')}
+        <div class="k k-undo ${S.history.length ? '' : 'off'}" ontouchstart="pressKey('undo')" onclick="pressKey('undo')">${undoSVG}</div>
+        <div class="k k-zero" ontouchstart="pressKey('0')" onclick="pressKey('0')">0</div>
+        <div class="k k-add ${canAdd ? '' : 'off'}" ontouchstart="${canAdd ? "pressKey('add')" : ''}" onclick="${canAdd ? "pressKey('add')" : ''}">add</div>
+        <div class="k k-redo ${S.redoStack && S.redoStack.length ? '' : 'off'}" style="grid-column:span 3;height:44px;font-size:13px;color:var(--text2);gap:6px" ontouchstart="${S.redoStack&&S.redoStack.length?'pressKey(\'redo\')':''}" onclick="${S.redoStack&&S.redoStack.length?'pressKey(\'redo\')':''}">
+          ${redoSVG} <span style="font-size:13px;font-family:var(--mono)">redo${S.redoStack&&S.redoStack.length?' ('+fmt(S.redoStack[S.redoStack.length-1].v)+')':''}</span>
+        </div>
+      </div>
+    </div>
+
+    ${last5entries.length ? `<div class="hist-card">
+      <div class="sect-label">this copy</div>
+      ${last5entries.map((e, i) => {
+        const ri = S.history.length - 1 - i;
+        return `<div class="hist-row">
+          <div class="h-check ${e.done ? 'done' : ''}" onclick="toggleDone(${ri})">
+            ${e.done ? checkSVG : ''}
           </div>
-          <div style="font-size:12px;color:var(--color-text-secondary)">${s.count} mark${s.count!==1?'s':''} · ${s.nums.length>44?s.nums.slice(0,44)+'…':s.nums}</div>
-        </div>`).join('')}
-    </div>
-  </div>`:'';
+          <span class="h-val">${fmt(e.v)}</span>
+          <span class="h-meta">${e.done ? 'done' : '—'} · #${ri + 1}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
 
-  document.getElementById('root').innerHTML=`
-<div class="card" style="${dk}">
-  <div class="toprow">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:13px;color:var(--color-text-secondary)">out of</span>
-      <input class="outof-inp" type="number" value="${S.outOf}" min="1" id="oo"
-        oninput="S.outOf=parseFloat(this.value)||80;if(S.total>S.outOf)S.total=S.outOf;persist();" />
+    <div class="bottom-bar" onclick="toggleSheet()">
+      <div class="bb-left">
+        <span class="bb-count">${S.sessions.length ? S.sessions.length + ' session' + (S.sessions.length !== 1 ? 's' : '') + ' saved' : 'no sessions yet'}</span>
+        <div class="bb-pills">
+          ${last3s.length
+            ? last3s.map(s => `<span class="bb-pill">${fmt(s.total)}/${s.outOf}</span>`).join('')
+            : `<span style="font-size:12px;color:var(--text3);font-family:var(--mono)">tap to view history</span>`}
+        </div>
+      </div>
+      <span class="bb-arrow">${S.sheet ? '↓' : '↑'}</span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="saved-badge ${S.savedFlash?'show':''}">saved</span>
-      <button class="dark-btn" onclick="toggleDark()">${S.dark?'light':'dark'}</button>
-    </div>
-  </div>
-  <div style="text-align:center;padding:4px 0 2px">
-    <div class="score-big" style="color:${scoreColor}">${fmt(S.total)}</div>
-    <div style="font-size:14px;color:var(--color-text-secondary);margin-top:4px">
-      ${pct.toFixed(1)}% &nbsp;·&nbsp;
-      <span style="color:${remain===0?'#E24B4A':'var(--color-text-secondary)'}">${remain>0?fmt(remain)+' left':'full'}</span>
-    </div>
-    <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
-  </div>
-</div>
+  `;
 
-<button class="done-btn ${hasWork?'active':'inactive'}" onclick="finishSession()">
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9.5L7 13.5L15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  done — save &amp; next copy
-</button>
-
-<div class="card" style="${dk};margin-top:10px">
-  <div class="display-box" style="${dk2}">
-    <span class="disp-num ${S.cur===''?'empty':''}">${S.cur===''?'—':S.cur}</span>
-  </div>
-  ${wouldExceed?`<div class="warn-pill">only ${fmt(remain)} left — can't add ${fmt(v)}</div>`:''}
-  <div class="kbd">
-    <div class="k" ontouchstart="pressKey('1')" onclick="pressKey('1')">1</div>
-    <div class="k" ontouchstart="pressKey('2')" onclick="pressKey('2')">2</div>
-    <div class="k" ontouchstart="pressKey('3')" onclick="pressKey('3')">3</div>
-    <div class="k" ontouchstart="pressKey('4')" onclick="pressKey('4')">4</div>
-    <div class="k" ontouchstart="pressKey('5')" onclick="pressKey('5')">5</div>
-    <div class="k" ontouchstart="pressKey('6')" onclick="pressKey('6')">6</div>
-    <div class="k" ontouchstart="pressKey('7')" onclick="pressKey('7')">7</div>
-    <div class="k" ontouchstart="pressKey('8')" onclick="pressKey('8')">8</div>
-    <div class="k" ontouchstart="pressKey('9')" onclick="pressKey('9')">9</div>
-    <div class="k k-undo ${S.history.length?'':'off'}" ontouchstart="pressKey('undo')" onclick="pressKey('undo')">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8H13C15.2 8 17 9.8 17 12 17 14.2 15.2 16 13 16H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 5L4 8 7 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="k" ontouchstart="pressKey('0')" onclick="pressKey('0')">0</div>
-    <div class="k k-enter ${canEnter?'':'off'}" ontouchstart="${canEnter?'pressKey(\'enter\')':''}" onclick="${canEnter?'pressKey(\'enter\')':''}">add</div>
-  </div>
-</div>
-
-${last5.length?`<div class="card" style="${dk}">
-  <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:4px">this copy — tap to mark</div>
-  ${last5.map((e,i)=>{const ri=S.history.length-1-i;return`<div class="hist-row">
-    <div class="h-circle ${e.done?'done':''}" onclick="toggleDone(${ri})">
-      ${e.done?`<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
-    </div>
-    <span style="flex:1;font-size:17px;font-weight:500;color:var(--color-text-primary)">${fmt(e.v)}</span>
-    <span style="font-size:12px;color:var(--color-text-tertiary)">${e.done?'checked':'—'} · #${ri+1}</span>
-  </div>`}).join('')}
-</div>`:''}
-
-<div class="bottom-bar" style="${dk}" onclick="toggleSheet()">
-  <div style="display:flex;flex-direction:column;gap:3px;overflow:hidden;flex:1">
-    <span style="font-size:12px;color:var(--color-text-tertiary)">${S.sessions.length?S.sessions.length+' session'+(S.sessions.length!==1?'s':'')+ ' saved':'no sessions yet'}</span>
-    <div style="display:flex;gap:8px;align-items:center">
-      ${last3sess.length
-        ?last3sess.map(s=>`<span class="bb-pill" style="${dk2}">${fmt(s.total)}/${s.outOf}</span>`).join('')
-        :`<span style="font-size:13px;color:var(--color-text-tertiary)">finish a copy to save</span>`}
-    </div>
-  </div>
-  <span style="font-size:18px;color:var(--color-text-tertiary);padding-left:8px">${S.sheet?'↓':'↑'}</span>
-</div>
-${sheet}`;
+  // sheet
+  const slot = document.getElementById('sheet-slot');
+  if (S.sheet) {
+    slot.innerHTML = `<div class="sheet-over" onclick="if(event.target===this)toggleSheet()">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <span class="sheet-title">past sessions</span>
+          ${S.sessions.length ? `<button class="clear-btn" onclick="clearSessions()">clear all</button>` : ''}
+        </div>
+        ${S.sessions.length === 0
+          ? `<div class="empty-state">no sessions yet<br/>finish a copy to save one</div>`
+          : S.sessions.map(s => `<div class="sess-card">
+              <div class="sess-top">
+                <span><span class="sess-total">${fmt(s.total)}</span><span class="sess-outof"> / ${s.outOf}</span></span>
+                <span class="sess-meta">${s.date} · ${s.time} · ${s.pct}%</span>
+              </div>
+              <div class="sess-marks">${s.count} mark${s.count !== 1 ? 's' : ''} · ${s.nums.length > 50 ? s.nums.slice(0, 50) + '…' : s.nums}</div>
+            </div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    slot.innerHTML = '';
+  }
 }
 
 render();
 </script>
+</body>
+</html>
