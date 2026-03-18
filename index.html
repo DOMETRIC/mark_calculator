@@ -83,8 +83,10 @@ body{
 .outof-inp:focus{border-color:var(--green)}
 .outof-inp::-webkit-inner-spin-button,.outof-inp::-webkit-outer-spin-button{-webkit-appearance:none}
 .score-main{text-align:center;padding:6px 0 4px}
-.score-num{font-family:var(--mono);font-size:72px;font-weight:500;line-height:1;letter-spacing:-3px;transition:color .2s}
+.score-num{font-family:var(--mono);font-size:60px;font-weight:500;line-height:1;letter-spacing:-3px;transition:color .2s}
 .score-sub{font-size:13px;color:var(--text2);margin-top:6px;font-family:var(--mono)}
+.score-hint{margin-top:4px;font-size:12px;color:var(--text3);font-family:var(--mono);opacity:.7}
+.score-hint span+span{margin-left:6px}
 .bar-wrap{margin-top:14px}
 .bar-track{height:5px;border-radius:99px;background:var(--bg4);overflow:hidden}
 .bar-fill{height:100%;border-radius:99px;transition:width .3s cubic-bezier(.4,0,.2,1),background .3s}
@@ -261,7 +263,7 @@ function clearAddTimer() {
   }
 }
 
-function scheduleAutoAdd() {
+function scheduleAutoAdd(delayMs) {
   clearAddTimer();
   if (S.cur === '') return;
   const currentCur = S.cur;
@@ -274,7 +276,7 @@ function scheduleAutoAdd() {
     } else {
       render();
     }
-  }, 3000);
+  }, delayMs);
 }
 
 function tryAdd() {
@@ -300,7 +302,8 @@ function pressKey(k) {
   const remain = parseFloat((S.outOf - S.total).toFixed(4));
   if (!isNaN(v) && v > remain) return;
   S.cur = next;
-  scheduleAutoAdd();
+  const delay = S.cur.length === 2 ? 1000 : 3000;
+  scheduleAutoAdd(delay);
   render();
 }
 
@@ -367,7 +370,7 @@ function render() {
   const wouldExceed = !isNaN(cv) && S.cur !== '' && (S.total + cv) > S.outOf;
   const canAdd = !isNaN(cv) && S.cur !== '' && !wouldExceed;
   const hasWork = S.history.length > 0 || S.total > 0;
-  const last5 = S.history.slice(-5).reverse();
+  const last3 = S.history.slice(-3).reverse();
   const last3s = S.sessions.slice(0, 3);
 
   const undoSVG = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 7H11C13.2 7 15 8.8 15 11 15 13.2 13.2 15 11 15H7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6 4.5L3.5 7 6 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -376,11 +379,11 @@ function render() {
   const saveSVG  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8.5L6 12.5L14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const skipSVG  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-  const last5entries = S.history.slice(-5).reverse();
-  const entriesHTML = last5entries.length
+  const lastEntries = S.history.slice(-3).reverse();
+  const entriesHTML = lastEntries.length
     ? `<div class="entries-strip">
-        <span class="strip-label">last:</span>
-        ${last5entries.map((e,i) => `<span class="entry-chip ${i===0?'latest':''}">${fmt(e.v)}</span>`).join('')}
+        <span class="strip-label">last 3:</span>
+        ${lastEntries.map((e,i) => `<span class="entry-chip ${i===0?'latest':''}">${fmt(e.v)}</span>`).join('')}
        </div>`
     : `<span class="strip-label" style="color:var(--text3)">no entries yet</span>`;
 
@@ -401,6 +404,10 @@ function render() {
       <div class="score-main">
         <div class="score-num" style="color:${scoreCol}">${fmt(S.total)}</div>
         <div class="score-sub">${pct.toFixed(1)}%</div>
+        <div class="score-hint">
+          <span>last:</span>
+          ${lastEntries.length ? lastEntries.map(e => `<span>${fmt(e.v)}</span>`).join('') : '<span>—</span>'}
+        </div>
       </div>
       <div class="bar-wrap">
         <div class="bar-track">
@@ -410,11 +417,11 @@ function render() {
     </div>
 
     <div class="action-row">
-      <button class="btn-save ${hasWork ? 'active' : 'inactive'}" onclick="finishSession()">
-        ${saveSVG} save &amp; next
-      </button>
-      <button class="btn-skip ${hasWork ? 'has-work' : 'inactive'}" onclick="skipSession()">
+      <button class="btn-save ${hasWork ? 'active' : 'inactive'}" onclick="skipSession()">
         ${skipSVG} skip copy
+      </button>
+      <button class="btn-skip ${hasWork ? 'has-work' : 'inactive'}" onclick="finishSession()">
+        ${saveSVG} save &amp; next
       </button>
     </div>
 
@@ -429,26 +436,12 @@ function render() {
         ${[1,2,3,4,5,6,7,8,9].map(n => `<div class="k" onclick="pressKey('${n}')">${n}</div>`).join('')}
         <div class="k k-undo ${S.history.length ? '' : 'off'}" onclick="pressKey('undo')">${undoSVG}</div>
         <div class="k k-zero" onclick="pressKey('0')">0</div>
-        <div class="k k-add ${canAdd ? '' : 'off'}" onclick="${canAdd ? "pressKey('add')" : ''}">add</div>
+        <div class="k k-add" onclick="skipSession()">skip</div>
         <div class="k k-redo ${S.redoStack && S.redoStack.length ? '' : 'off'}" style="grid-column:span 3;height:44px;font-size:13px;color:var(--text2);gap:6px" onclick="${S.redoStack&&S.redoStack.length?'pressKey(\'redo\')':''}">
           ${redoSVG} <span style="font-size:13px;font-family:var(--mono)">redo${S.redoStack&&S.redoStack.length?' ('+fmt(S.redoStack[S.redoStack.length-1].v)+')':''}</span>
         </div>
       </div>
     </div>
-
-    ${last5entries.length ? `<div class="hist-card">
-      <div class="sect-label">this copy</div>
-      ${last5entries.map((e, i) => {
-        const ri = S.history.length - 1 - i;
-        return `<div class="hist-row">
-          <div class="h-check ${e.done ? 'done' : ''}" onclick="toggleDone(${ri})">
-            ${e.done ? checkSVG : ''}
-          </div>
-          <span class="h-val">${fmt(e.v)}</span>
-          <span class="h-meta">${e.done ? 'done' : '—'} · #${ri + 1}</span>
-        </div>`;
-      }).join('')}
-    </div>` : ''}
 
     <div class="bottom-bar" onclick="toggleSheet()">
       <div class="bb-left">
