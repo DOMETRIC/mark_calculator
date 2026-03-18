@@ -302,7 +302,7 @@ function pressKey(k) {
   const remain = parseFloat((S.outOf - S.total).toFixed(4));
   if (!isNaN(v) && v > remain) return;
   S.cur = next;
-  const delay = S.cur.length === 2 ? 1000 : 3000;
+  const delay = S.cur.length === 2 ? 1000 : 2000;
   scheduleAutoAdd(delay);
   render();
 }
