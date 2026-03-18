@@ -1,0 +1,219 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:390px;margin:0 auto;padding:10px 12px 0;font-family:var(--font-sans)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.score-big{font-size:54px;font-weight:500;line-height:1;letter-spacing:-2px}
+.bar-track{height:7px;border-radius:99px;background:var(--color-border-tertiary);overflow:hidden;margin-top:10px}
+.bar-fill{height:100%;border-radius:99px;transition:width .25s,background .25s}
+.display-box{background:var(--color-background-secondary);border-radius:12px;padding:10px 16px;text-align:center;margin-bottom:10px;min-height:56px;display:flex;align-items:center;justify-content:center}
+.disp-num{font-size:38px;font-weight:500;color:var(--color-text-primary);letter-spacing:-1px}
+.disp-num.empty{color:var(--color-text-tertiary)}
+.warn-pill{background:#FAEEDA;border:0.5px solid #BA7517;border-radius:8px;padding:6px 12px;font-size:13px;color:#633806;font-weight:500;text-align:center;margin-bottom:10px}
+.kbd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.k{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;height:56px;font-size:22px;font-weight:500;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.k:active{background:var(--color-border-secondary)}
+.k-enter{background:#1D9E75;color:#fff;border-color:#1D9E75;font-size:15px}
+.k-enter:active{background:#0F6E56}
+.k-enter.off{background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary);pointer-events:none}
+.k-undo.off{opacity:.3;pointer-events:none}
+.done-btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:17px;font-weight:500;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px}
+.done-btn.active{background:#1D9E75;color:#fff}
+.done-btn.active:active{background:#0F6E56}
+.done-btn.inactive{background:var(--color-background-secondary);color:var(--color-text-tertiary);pointer-events:none}
+.toprow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.outof-inp{width:62px;text-align:center;font-size:15px;font-weight:500;padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-primary);-moz-appearance:textfield}
+.outof-inp::-webkit-inner-spin-button,.outof-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+.dark-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px;color:var(--color-text-secondary)}
+.hist-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.hist-row:last-child{border-bottom:none}
+.h-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation}
+.h-circle.done{background:#1D9E75;border-color:#1D9E75}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:10;display:flex;flex-direction:column;justify-content:flex-end;min-height:100%}
+.sheet{background:var(--color-background-primary);border-radius:16px 16px 0 0;padding:0 16px 24px;overflow-y:auto;max-height:72vh}
+.sheet-handle{width:36px;height:4px;background:var(--color-border-secondary);border-radius:99px;margin:12px auto 14px}
+.s-card{background:var(--color-background-secondary);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.bottom-bar{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;touch-action:manipulation}
+.bb-pill{background:var(--color-background-secondary);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap}
+.saved-badge{font-size:11px;color:#1D9E75;font-weight:500;opacity:0;transition:opacity .4s}
+.saved-badge.show{opacity:1}
+</style>
+
+<div style="position:relative"><div class="wrap" id="root"></div></div>
+
+<script>
+const KEY='marks_v1';
+function load(){try{const d=localStorage.getItem(KEY);return d?JSON.parse(d):{}}catch(e){return{}}}
+function save(s){try{localStorage.setItem(KEY,JSON.stringify({total:s.total,outOf:s.outOf,history:s.history,sessions:s.sessions,dark:s.dark}));}catch(e){}}
+
+const def={cur:'',total:0,outOf:80,history:[],sessions:[],dark:false,sheet:false,savedFlash:false};
+const stored=load();
+const S=Object.assign({},def,stored,{cur:'',sheet:false,savedFlash:false});
+
+function fmt(n){return n%1===0?String(n):n.toFixed(1)}
+
+function persist(){
+  save(S);
+  S.savedFlash=true;render();
+  setTimeout(()=>{S.savedFlash=false;render();},1200);
+}
+
+function tryAdd(){
+  const v=parseFloat(S.cur);
+  if(isNaN(v)||S.cur==='')return;
+  const nt=parseFloat((S.total+v).toFixed(4));
+  if(nt>S.outOf)return;
+  S.total=nt;
+  S.history.push({v,done:false});
+  S.cur='';
+  persist();
+}
+
+function pressKey(k){
+  if(k==='enter'){tryAdd();return;}
+  if(k==='undo'){undo();return;}
+  if(S.cur.length>=2)return;
+  const next=S.cur+k;
+  const v=parseFloat(next);
+  const remain=parseFloat((S.outOf-S.total).toFixed(4));
+  if(!isNaN(v)&&v>remain)return;
+  S.cur=next;
+  if(S.cur.length===2){setTimeout(()=>tryAdd(),120);}
+  else render();
+}
+
+function undo(){
+  if(!S.history.length)return;
+  const last=S.history.pop();
+  S.total=parseFloat((S.total-last.v).toFixed(4));
+  S.cur='';persist();
+}
+
+function toggleDone(i){S.history[i].done=!S.history[i].done;persist();}
+
+function finishSession(){
+  if(S.total===0&&S.history.length===0)return;
+  const pct=S.outOf>0?((S.total/S.outOf)*100).toFixed(1):'—';
+  const nums=S.history.map(e=>fmt(e.v)).join(', ');
+  S.sessions.unshift({total:S.total,outOf:S.outOf,pct,count:S.history.length,nums,
+    time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    date:new Date().toLocaleDateString([],{day:'numeric',month:'short'})});
+  if(S.sessions.length>20)S.sessions.pop();
+  S.total=0;S.history=[];S.cur='';
+  persist();
+}
+
+function toggleSheet(){S.sheet=!S.sheet;render();}
+function toggleDark(){S.dark=!S.dark;persist();}
+function clearSessions(){S.sessions=[];persist();}
+
+function render(){
+  const pct=S.outOf>0?((S.total/S.outOf)*100):0;
+  const remain=parseFloat((S.outOf-S.total).toFixed(4));
+  const barColor=pct>=90?'#E24B4A':pct>=75?'#EF9F27':'#1D9E75';
+  const scoreColor=pct>=90?'#E24B4A':pct>=75?'#BA7517':'var(--color-text-primary)';
+  const v=parseFloat(S.cur);
+  const wouldExceed=!isNaN(v)&&S.cur!==''&&(S.total+v)>S.outOf;
+  const canEnter=!isNaN(v)&&S.cur!==''&&!wouldExceed;
+  const hasWork=S.history.length>0||S.total>0;
+  const last5=S.history.slice(-5).reverse();
+  const last3sess=S.sessions.slice(0,3);
+  const dk=S.dark?'background:#1e1e1e;border-color:#333':'';
+  const dk2=S.dark?'background:#2a2a2a':'';
+
+  const sheet=S.sheet?`<div class="sheet-backdrop" onclick="if(event.target===this)toggleSheet()">
+    <div class="sheet" style="${S.dark?'background:#1e1e1e':''}">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:500;color:var(--color-text-secondary)">past sessions</span>
+        ${S.sessions.length?`<button onclick="clearSessions()" style="background:none;border:none;font-size:12px;color:var(--color-text-danger);cursor:pointer">clear all</button>`:''}
+      </div>
+      ${S.sessions.length===0
+        ?`<div style="text-align:center;padding:28px 0;font-size:14px;color:var(--color-text-tertiary)">no sessions saved yet</div>`
+        :S.sessions.map(s=>`<div class="s-card" style="${dk2}">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+            <span style="font-size:22px;font-weight:500;color:var(--color-text-primary)">${fmt(s.total)}<span style="font-size:14px;color:var(--color-text-secondary)"> / ${s.outOf}</span></span>
+            <span style="font-size:12px;color:var(--color-text-tertiary)">${s.date} ${s.time} · ${s.pct}%</span>
+          </div>
+          <div style="font-size:12px;color:var(--color-text-secondary)">${s.count} mark${s.count!==1?'s':''} · ${s.nums.length>44?s.nums.slice(0,44)+'…':s.nums}</div>
+        </div>`).join('')}
+    </div>
+  </div>`:'';
+
+  document.getElementById('root').innerHTML=`
+<div class="card" style="${dk}">
+  <div class="toprow">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;color:var(--color-text-secondary)">out of</span>
+      <input class="outof-inp" type="number" value="${S.outOf}" min="1" id="oo"
+        oninput="S.outOf=parseFloat(this.value)||80;if(S.total>S.outOf)S.total=S.outOf;persist();" />
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="saved-badge ${S.savedFlash?'show':''}">saved</span>
+      <button class="dark-btn" onclick="toggleDark()">${S.dark?'light':'dark'}</button>
+    </div>
+  </div>
+  <div style="text-align:center;padding:4px 0 2px">
+    <div class="score-big" style="color:${scoreColor}">${fmt(S.total)}</div>
+    <div style="font-size:14px;color:var(--color-text-secondary);margin-top:4px">
+      ${pct.toFixed(1)}% &nbsp;·&nbsp;
+      <span style="color:${remain===0?'#E24B4A':'var(--color-text-secondary)'}">${remain>0?fmt(remain)+' left':'full'}</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
+  </div>
+</div>
+
+<button class="done-btn ${hasWork?'active':'inactive'}" onclick="finishSession()">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9.5L7 13.5L15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  done — save &amp; next copy
+</button>
+
+<div class="card" style="${dk};margin-top:10px">
+  <div class="display-box" style="${dk2}">
+    <span class="disp-num ${S.cur===''?'empty':''}">${S.cur===''?'—':S.cur}</span>
+  </div>
+  ${wouldExceed?`<div class="warn-pill">only ${fmt(remain)} left — can't add ${fmt(v)}</div>`:''}
+  <div class="kbd">
+    <div class="k" ontouchstart="pressKey('1')" onclick="pressKey('1')">1</div>
+    <div class="k" ontouchstart="pressKey('2')" onclick="pressKey('2')">2</div>
+    <div class="k" ontouchstart="pressKey('3')" onclick="pressKey('3')">3</div>
+    <div class="k" ontouchstart="pressKey('4')" onclick="pressKey('4')">4</div>
+    <div class="k" ontouchstart="pressKey('5')" onclick="pressKey('5')">5</div>
+    <div class="k" ontouchstart="pressKey('6')" onclick="pressKey('6')">6</div>
+    <div class="k" ontouchstart="pressKey('7')" onclick="pressKey('7')">7</div>
+    <div class="k" ontouchstart="pressKey('8')" onclick="pressKey('8')">8</div>
+    <div class="k" ontouchstart="pressKey('9')" onclick="pressKey('9')">9</div>
+    <div class="k k-undo ${S.history.length?'':'off'}" ontouchstart="pressKey('undo')" onclick="pressKey('undo')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8H13C15.2 8 17 9.8 17 12 17 14.2 15.2 16 13 16H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 5L4 8 7 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="k" ontouchstart="pressKey('0')" onclick="pressKey('0')">0</div>
+    <div class="k k-enter ${canEnter?'':'off'}" ontouchstart="${canEnter?'pressKey(\'enter\')':''}" onclick="${canEnter?'pressKey(\'enter\')':''}">add</div>
+  </div>
+</div>
+
+${last5.length?`<div class="card" style="${dk}">
+  <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:4px">this copy — tap to mark</div>
+  ${last5.map((e,i)=>{const ri=S.history.length-1-i;return`<div class="hist-row">
+    <div class="h-circle ${e.done?'done':''}" onclick="toggleDone(${ri})">
+      ${e.done?`<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+    </div>
+    <span style="flex:1;font-size:17px;font-weight:500;color:var(--color-text-primary)">${fmt(e.v)}</span>
+    <span style="font-size:12px;color:var(--color-text-tertiary)">${e.done?'checked':'—'} · #${ri+1}</span>
+  </div>`}).join('')}
+</div>`:''}
+
+<div class="bottom-bar" style="${dk}" onclick="toggleSheet()">
+  <div style="display:flex;flex-direction:column;gap:3px;overflow:hidden;flex:1">
+    <span style="font-size:12px;color:var(--color-text-tertiary)">${S.sessions.length?S.sessions.length+' session'+(S.sessions.length!==1?'s':'')+ ' saved':'no sessions yet'}</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      ${last3sess.length
+        ?last3sess.map(s=>`<span class="bb-pill" style="${dk2}">${fmt(s.total)}/${s.outOf}</span>`).join('')
+        :`<span style="font-size:13px;color:var(--color-text-tertiary)">finish a copy to save</span>`}
+    </div>
+  </div>
+  <span style="font-size:18px;color:var(--color-text-tertiary);padding-left:8px">${S.sheet?'↓':'↑'}</span>
+</div>
+${sheet}`;
+}
+
+render();
+</script>
