@@ -252,8 +252,8 @@ function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
 
 function persist() {
   saveState(S);
-  S.flash = true; render();
-  setTimeout(() => { S.flash = false; render(); }, 1400);
+  S.flash = true;
+  render();
 }
 
 function clearAddTimer() {
